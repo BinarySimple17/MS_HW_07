@@ -1,0 +1,172 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: Critical
+      folder: DB
+      interval: 1m
+      rules:
+        - uid: ff7y046gkuj28f
+          title: DB down
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: prometheus
+              model:
+                editorMode: code
+                expr: pg_up
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 1
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: df7yf8znyapz4f
+          title: Error Rate (5xx) by API Method
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 900
+                to: 0
+              datasourceUid: prometheus
+              model:
+                editorMode: builder
+                exemplar: false
+                expr: sum by(method) (rate(http_server_requests_seconds_bucket{status=~"5..", method!~"^/actuator/.*"}[1m]))
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 10
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: adq6jm8
+          panelId: 2
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations:
+            __dashboardUid__: adq6jm8
+            __panelId__: "2"
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: ef7yh8brvoirkb
+          title: Latency 0.95
+          condition: B
+          data:
+            - refId: A
+              queryType: alerting
+              relativeTimeRange:
+                from: 900
+                to: 0
+              datasourceUid: prometheus
+              model:
+                datasource:
+                    type: prometheus
+                    uid: prometheus
+                editorMode: builder
+                expr: histogram_quantile(0.95, sum by(le, method, uri) (rate(http_server_requests_seconds_bucket{uri!~"^/actuator/.*"}[1m])))
+                expression: ""
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                queryType: alerting
+                range: false
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.5
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: avg
+                      type: query
+                datasource:
+                    name: Expression
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: B
+                type: threshold
+          dashboardUid: adq6jm8
+          panelId: 6
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations:
+            __dashboardUid__: adq6jm8
+            __panelId__: "6"
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email

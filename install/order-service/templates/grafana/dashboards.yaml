@@ -1,0 +1,10 @@
+{{- if (.Files.Glob "grafana/dashboards/*") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-grafana-dashboards
+  labels:
+    grafana_dashboard: "1"
+data:
+{{ (.Files.Glob "grafana/dashboards/*").AsConfig | indent 2 }}
+{{- end}}

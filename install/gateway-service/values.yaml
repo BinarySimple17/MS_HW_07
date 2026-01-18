@@ -1,0 +1,177 @@
+# Default values for app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: binarysimple/simple-users-gateway
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.0.1"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: arch.homework
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - arch.homework
+
+gateway:
+  enabled: false
+  annotations: {}
+  className: ""
+  listeners:
+    http:
+      port: 80
+    https:
+      enabled: false
+      port: 443
+      tlsSecretName: ""
+
+httpRoute:
+  enabled: false
+  annotations: {}
+  gateway:
+    name: ""
+    sectionName: "http"
+  hostname: arch.homework
+  paths:
+    - path:
+        value: /
+        pathType: Prefix
+  httpRedirect:
+    enabled: false
+    sectionName: http
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+liveness:
+  delay: 15
+  timeout: 10
+  path: /actuator/health/
+
+#readiness:
+#  delay: 15
+#  timeout: 10
+#  path: /actuator/health/
+
+autoscaling:
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPU: 80
+    targetMemory: ""
+
+# Additional volumes on the output Deployment definition.
+volumes:
+  - name: config-volume
+    configMap:
+      name: gateway-service-config
+      items:
+        - key: application-kubernetes.yaml
+          path: application-kubernetes.yaml
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/config
+    readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    path: /actuator/prometheus
+    jobLabel: ""
+    interval: 15s
+    scrapeTimeout: ""
+
+spring:
+  profiles:
+    active: "kubernetes"
+
+endpoints:
+  users:
+    release: "hw6"
+    host: "users-service"
+    space: "default"
+    port: "80"
+  auth:
+    release: "hw6"
+    host: "auth-service"
+    space: "authority"
+    port: "8080"
+  order:
+    release: "hw7-order"
+    host: "order-service"
+    space: "default"
+    port: "8080"
+  bill:
+    release: "hw7-bill"
+    host: "billing-service"
+    space: "default"
+    port: "8080"
+  notif:
+    release: "hw7-notif"
+    host: "notification-service"
+    space: "default"
+    port: "8080"

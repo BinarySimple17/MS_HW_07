@@ -1,0 +1,25 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "app.fullname" . }}-nginx-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-metrics
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/instance: ingress-nginx
+      app.kubernetes.io/component: controller
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.metrics.nginx.namespace | default "ng" }}
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: {{ .Values.metrics.nginx.interval }}
+    scrapeTimeout: {{ .Values.metrics.nginx.scrapeTimeout }}
+{{- end }}

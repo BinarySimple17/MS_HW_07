@@ -1,0 +1,33 @@
+nameOverride: ""
+fullnameOverride: ""
+
+# Ссылка на существующий секрет с паролями Kafka
+existingSecret: kafka-user-passwords
+
+kafka-ui:
+  image:
+    registry: docker.io
+    repository: provectuslabs/kafka-ui
+    tag: latest
+
+  env:
+    # Права
+    - name: DYNAMIC_CONFIG_ENABLED
+      value: "true"
+
+    # Kafka кластер
+    - name: KAFKA_CLUSTERS_0_NAME
+      value: "Kafka-Minikube"
+    - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+      value: "kafka:9092"
+    - name: KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL
+      value: "SASL_PLAINTEXT"
+    - name: KAFKA_CLUSTERS_0_PROPERTIES_SASL_MECHANISM
+      value: "PLAIN"
+    - name: CLIENT_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: kafka-secret
+          key: client-passwords
+    - name: KAFKA_CLUSTERS_0_PROPERTIES_SASL_JAAS_CONFIG
+      value: 'org.apache.kafka.common.security.scram.ScramLoginModule required username="user1" password="$(CLIENT_PASSWORD)";'

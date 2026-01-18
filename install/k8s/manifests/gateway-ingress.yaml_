@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-service-ingress
+  labels:
+    app.kubernetes.io/name: gateway-service
+    app.kubernetes.io/instance: gateway-release
+spec:
+  ingressClassName: nginx # класс nginx ingress
+  rules:
+    - host: arch.homework # хост arch.homework
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080

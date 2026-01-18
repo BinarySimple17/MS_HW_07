@@ -1,0 +1,92 @@
+{{- if .Values.database.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-db-migrate
+  labels:
+    app: {{ .Values.app.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: migration
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.database.migration.backoffLimit | default 4 }}
+  ttlSecondsAfterFinished: {{ .Values.database.migration.ttlSecondsAfterFinished | default 86400 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+        release: {{ .Release.Name }}
+        job: db-migrate
+    spec:
+#      serviceAccountName: {{ .Release.Name }}-deps-checker  # ServiceAccount
+#      initContainers:
+#        - name: wait-for-postgres
+#          image: registry.k8s.io/kubectl:v1.29.0  # Kubernetes image
+#          command:
+#              - kubectl
+#              - wait
+#              - --for=condition=ready
+#              - pod
+#              - -l
+#              - app.kubernetes.io/name=postgresql
+#              - --timeout={{ .Values.database.migration.timeout }}s
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:15-alpine #
+          command:                                # wait for postgres
+            - sh
+            - -c
+            - |
+              echo "Checking PostgreSQL availability..."
+              until pg_isready -h {{ .Release.Name }}-postgresql -p 5432 -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -t 30; do
+                echo "PostgreSQL not ready, waiting..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready"
+      restartPolicy: OnFailure
+      containers:
+        - name: db-migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          workingDir: /application
+          command: ["java"]
+          args:
+            - "-Dspring.profiles.active=job"
+            - "-Dspring.config.location=classpath:/;file:/application/config/"
+            - "-Dspring.main.web-application-type=none"
+            {{- if .Values.database.migration.debug }}
+            - "-Dlogging.level.org.springframework.boot.autoconfigure=DEBUG"
+            - "-Dlogging.level.org.springframework.cloud=DEBUG"
+            {{- end }}
+            - "-jar"
+            - "app.jar"
+          env:
+            {{- if not .Values.database.migration.useConfigMap }}
+            - name: DATASOURCE_URL
+              value: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}
+            - name: DATASOURCE_USERNAME
+              value: {{ .Values.postgresql.auth.username }}
+            {{- end }}
+            - name: DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key: {{ .Values.database.passwordKey }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /application/config
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.app.name }}-config
+            items:
+              - key: application-job.yaml
+                path: application-job.yaml
+      terminationGracePeriodSeconds: {{ .Values.database.migration.gracePeriod | default 30 }}
+{{- end }}      

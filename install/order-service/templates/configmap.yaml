@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-90"
+data:
+  application-kubernetes.yaml: |
+    spring:
+      datasource:
+        url: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}
+        username: {{ .Values.postgresql.auth.username }}
+        password: ${DATASOURCE_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          maximum-pool-size: 10
+          minimum-idle: 2
+    
+      liquibase:
+        enabled: true
+
+      kafka:
+        bootstrap-servers: {{ .Values.endpoints.kafka.host }}.{{ .Values.endpoints.kafka.space }}.svc.cluster.local:{{ .Values.endpoints.kafka.port }}
+        properties:
+          security.protocol: SASL_PLAINTEXT
+          sasl.mechanism: PLAIN
+          sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="user1" password="${KAFKA_PASSWORD}";
+
+        producer:
+          key-serializer: org.apache.kafka.common.serialization.StringSerializer
+          value-serializer: org.springframework.kafka.support.serializer.JsonSerializer       
+    
+      springdoc:
+        api-docs:
+          path: /v3/api-docs
+        swagger-ui:
+          path: /swagger-ui.html
+        info:
+          title: Order Service API
+          version: {{ .Values.image.tag }}
+          description: {{ .Chart.Name }} API.
+          contact:
+            name: Support Team
+            email: support@example.com
+    endpoints:
+      users-service: http://{{ .Values.endpoints.users.release }}-{{ .Values.endpoints.users.host }}.{{ .Values.endpoints.users.space }}.svc.cluster.local:{{ .Values.endpoints.users.port }}
+      api-gateway: http://{{ .Values.endpoints.gateway.release }}-{{ .Values.endpoints.gateway.host }}.{{ .Values.endpoints.gateway.space }}.svc.cluster.local:{{ .Values.endpoints.gateway.port }}
+      billing-service: http://{{ .Values.endpoints.bill.release }}-{{ .Values.endpoints.bill.host }}.{{ .Values.endpoints.bill.space }}.svc.cluster.local:{{ .Values.endpoints.bill.port }}
