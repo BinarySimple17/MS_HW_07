@@ -1,0 +1,88 @@
+asyncapi: 3.0.0
+info:
+  title: Order Service
+  version: 1.0.0
+  description: |
+    This document describes the asynchronous API of the Order Service.
+    The service produces OrderEvent messages to a Kafka topic when a new order is created.
+
+servers:
+  kafka-server:
+    url: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    protocol: kafka
+    security:
+      - saslScram: []
+    description: Kafka server for event streaming
+
+channels:
+  {app.kafka.topics.order-events}:
+    description: Topic for order-related events
+    publish:
+      operationId: publishOrderEvent
+      summary: Publish an OrderEvent
+      message:
+        $ref: '#/components/messages/OrderEvent'
+
+components:
+  messages:
+    OrderEvent:
+      summary: Event triggered when an order is successfully created
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: integer
+            format: int64
+            description: Unique identifier of the order
+          username:
+            type: string
+            description: Username of the customer who placed the order
+          totalCost:
+            type: number
+            format: double
+            description: Total cost of the order
+          status:
+            type: string
+            enum:
+              - NEW
+              - DELIVERY_FAILED
+              - INSUFFICIENT_FUNDS
+              - FAILED
+              - IN_PROGRESS
+              - DONE
+              - CANCELED
+            description: Current status of the order
+          contact:
+            $ref: '#/components/schemas/NotificationContact'
+          notificationType:
+            $ref: '#/components/schemas/NotificationType'
+          parentId:
+            type: integer
+            format: int64
+            description: ID of the parent entity, if any
+
+  schemas:
+    NotificationContact:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address for notifications
+        phone:
+          type: string
+          description: Phone number for SMS notifications
+        telegramUsername:
+          type: string
+          description: Telegram username for notifications
+        whatsappUsername:
+          type: string
+          description: WhatsApp username for notifications
+    NotificationType:
+      type: string
+      enum:
+        - INFO
+        - SUCCESS
+        - FAIL
+        - DEFAULT
+      description: Type of notification to be sent

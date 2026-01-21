@@ -1,0 +1,833 @@
+{
+	"info": {
+		"_postman_id": "32c69e6e-c7e3-408f-b987-b4e85f948226",
+		"name": "HW7",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1052584"
+	},
+	"item": [
+		{
+			"name": "register",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 201 OK\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"userToken\", responseData.accessToken);\r",
+							"pm.collectionVariables.set(\"depositAmount\", 150);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var randomUsername = \"usr\" + pm.variables.replaceIn('{{$randomInt}}');\r",
+							"pm.collectionVariables.set(\"randomUsername\", randomUsername);\r",
+							"\r",
+							"var userPassword = \"Pass\" + pm.variables.replaceIn('{{$randomInt}}');\r",
+							"pm.collectionVariables.set(\"userPassword\", userPassword);\r",
+							"\r",
+							"console.log(\"=== REGISTER USER_1 ===\");"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{randomUsername}}\",\n  \"email\": \"{{randomUsername}}@mail.com\",\n  \"phone\": \"+7987654321\",\n  \"password\": \"{{userPassword}}\",\n  \"firstName\": \"Alex4_{{randomUsername}}\",\n  \"lastName\": \"Ivanov4_{{randomUsername}}\",\n  \"login\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/auth/register",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get balance",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Аккаунт в биллинге создан\", function () {\r",
+							"   pm.expect(responseData.username).to.equal(pm.collectionVariables.get(\"randomUsername\"));\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "X-Username",
+						"value": "{{randomUsername}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account/balance",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deposit money",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"console.log(\"depositAmount=:\", pm.collectionVariables.get(\"depositAmount\"));\r",
+							"\r",
+							"pm.test(\"Баланс пополнен. Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "X-Username",
+						"value": "{{randomUsername}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"DEPOSIT\",\n  \"amount\": {{depositAmount}},\n  \"account\": {\n    \"username\": \"{{randomUsername}}\"\n  }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account/operate",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account",
+						"operate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get balance",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"balancePrev\", responseData.balance);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "X-Username",
+						"value": "{{randomUsername}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account/balance",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "order_create",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Заказ создан\", function () {\r",
+							"   pm.expect(responseData.status).to.equal(\"NEW\");\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"orderId\", responseData.id);\r",
+							"pm.collectionVariables.set(\"orderPrice\", responseData.totalCost);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{randomUsername}}\",\n  \"totalCost\": 19,\n  \"createdAt\": \"2026-01-17T23:39:26.190Z\",\n  \"shopId\": 1,\n  \"status\": \"NEW\",\n  \"orderPositions\": [\n    {\n      \"productId\": 111,\n      \"price\": 3,\n      \"quantity\": 5\n    },\n    {\n      \"productId\": 112,\n      \"price\": 4,\n      \"quantity\": 1\n    }    \n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/order",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "check balance success",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"var newBalance = pm.collectionVariables.get(\"balancePrev\") - pm.collectionVariables.get(\"orderPrice\");\r",
+							"\r",
+							"pm.test(\"Деньги за заказ уплачены\", function () {\r",
+							"   pm.expect(responseData.balance).to.equal(newBalance);\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"balancePrev\", responseData.balance);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "X-Username",
+						"value": "{{randomUsername}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account/balance",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_notif",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"var result = responseData.content[ 0 ].notificationType\r",
+							"\r",
+							"pm.test(\"Уведомление SUCCESS\", function () {\r",
+							"    pm.expect(result).to.eql(\"SUCCESS\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					}
+				],
+				"url": {
+					"raw": "http://arch.homework/api/v1/notif?page=0&size=20&parentType=ORDER&parentId={{orderId}}",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"notif"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "{{randomUsername}}",
+							"disabled": true
+						},
+						{
+							"key": "notificationType",
+							"value": "SUCCESS",
+							"disabled": true
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "20"
+						},
+						{
+							"key": "parentType",
+							"value": "ORDER"
+						},
+						{
+							"key": "parentId",
+							"value": "{{orderId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "order_create 2much",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.collectionVariables.set(\"orderId\", responseData.id);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{randomUsername}}\",\n  \"totalCost\": 19200,\n  \"createdAt\": \"2026-01-17T23:39:26.190Z\",\n  \"shopId\": 1,\n  \"status\": \"NEW\",\n  \"orderPositions\": [\n    {\n      \"productId\": 111,\n      \"price\": 3,\n      \"quantity\": 5\n    },\n    {\n      \"productId\": 112,\n      \"price\": 4,\n      \"quantity\": 1\n    }    \n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://arch.homework/api/v1/order",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"order"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "check balance fail",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"var newBalance = pm.collectionVariables.get(\"balancePrev\");\r",
+							"\r",
+							"pm.test(\"Деньги за заказ не списаны\", function () {\r",
+							"   pm.expect(responseData.balance).to.equal(newBalance);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					},
+					{
+						"key": "X-Username",
+						"value": "{{randomUsername}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://arch.homework/api/v1/billing/account/balance",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"billing",
+						"account",
+						"balance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_notif end",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var responseData = pm.response.json();\r",
+							"\r",
+							"pm.test(\"Статус 200 OK\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"var result = responseData.content[ 0 ].notificationType\r",
+							"\r",
+							"pm.test(\"Уведомление FAIL\", function () {\r",
+							"    pm.expect(result).to.eql(\"FAIL\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{userToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "*/*"
+					}
+				],
+				"url": {
+					"raw": "http://arch.homework/api/v1/notif?page=0&size=20&parentType=ORDER&parentId={{orderId}}",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"api",
+						"v1",
+						"notif"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "{{randomUsername}}",
+							"disabled": true
+						},
+						{
+							"key": "notificationType",
+							"value": "SUCCESS",
+							"disabled": true
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "20"
+						},
+						{
+							"key": "parentType",
+							"value": "ORDER"
+						},
+						{
+							"key": "parentId",
+							"value": "{{orderId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					"console.log(\"=== REQUEST DATA ===\");\r",
+					"console.log(\"URL:\", pm.request.url.toString());\r",
+					"console.log(\"Method:\", pm.request.method);\r",
+					"console.log(\"Headers:\", JSON.stringify(pm.request.headers.toObject(), null, 2));\r",
+					"\r",
+					"if (pm.request.body) {\r",
+					"    const jsonrequestBody = pm.request.body.toJSON();\r",
+					"    console.log(\"Body:\", jsonrequestBody);\r",
+					"}\r",
+					"\r",
+					"console.log(\"\\n\");"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					"console.log(\"=== RESPONSE DATA ===\");\r",
+					"console.log(\"Status:\", pm.response.code, pm.response.status);\r",
+					"console.log(\"Response Time:\", pm.response.responseTime, \"ms\");\r",
+					"\r",
+					"// Логируем заголовки ответа\r",
+					"const responseHeadersTest = pm.response.headers.toObject();\r",
+					"console.log(\"Response Headers:\", JSON.stringify(responseHeadersTest, null, 2));\r",
+					"\r",
+					"// Логируем тело ответа\r",
+					"try {\r",
+					"    // Парсим JSON если это возможно\r",
+					"    const jsonResponse = pm.response.json();\r",
+					"    console.log(\"Response Body (json):\", JSON.stringify(jsonResponse, null, 2));\r",
+					"} catch (e) {\r",
+					"    console.log(\"Response Body (text):\", pm.response.text());\r",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "randomUsername",
+			"value": ""
+		},
+		{
+			"key": "userToken",
+			"value": ""
+		},
+		{
+			"key": "userPassword",
+			"value": ""
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		},
+		{
+			"key": "orderId",
+			"value": ""
+		},
+		{
+			"key": "balancePrev",
+			"value": ""
+		},
+		{
+			"key": "depositAmount",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "orderPrice",
+			"value": ""
+		}
+	]
+}

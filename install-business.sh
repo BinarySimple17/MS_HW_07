@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Установочный скрипт для развертывания приложения в Kubernetes
+# Установочный скрипт для развертывания бизнес части приложения в Kubernetes
 echo "Starting installation..."
 
 # Функция для ожидания
@@ -20,29 +20,10 @@ kubectl apply -f ./install/k8s/manifests/gateway-secrets.yaml -n zsvv-main
 kubectl create namespace zsvv-authority
 kubectl apply -f ./install/k8s/manifests/auth-secrets.yaml -n zsvv-authority 
 
-kubectl create namespace zsvv-kafka
-kubectl apply -f ./install/k8s/manifests/kafka-secrets.yaml -n zsvv-kafka
-kubectl apply -f ./install/k8s/manifests/kafka-secrets.yaml -n zsvv-main
-kubectl apply -f ./install/k8s/manifests/notif-secrets.yaml -n zsvv-main 
-kubectl apply -f ./install/k8s/manifests/order-secrets.yaml -n zsvv-main 
-kubectl apply -f ./install/k8s/manifests/bill-secrets.yaml -n zsvv-main
-
-# echo "Secrets applied. Waiting 20 seconds..."
-# wait_seconds 20
-
-# Добавление helm репозиториев
-echo "Step 2: Adding Helm repositories..."
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add kafka-ui https://provectus.github.io/kafka-ui-charts
-helm repo update
-
 # Сборка локальных helm чартов
 echo "Step 3: Building local Helm charts..."
 helm package ./install/auth-service/ --destination ./install/auth-service/
 helm package ./install/gateway-service/ --destination ./install/gateway-service/
-helm package ./install/kafka/ --destination ./install/kafka/
-helm package ./install/kafka-ui/ --destination ./install/kafka-ui/
 helm package ./install/users-service/ --destination ./install/users-service/
 helm package ./install/billing-service/ --destination ./install/billing-service/
 helm package ./install/notif-service/ --destination ./install/notif-service/
@@ -50,27 +31,6 @@ helm package ./install/order-service/ --destination ./install/order-service/
 
 echo "Helm charts built."
 
-# Установка мониторинга
-echo "Step 4: Installing monitoring stack..."
-helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-  -f install/monitoring/prometheus.yaml \
-  -f install/monitoring/grafana.yaml \
-  --namespace zsvv-monitoring \
-  --create-namespace
-
-echo "Monitoring stack installed. Waiting 20 seconds..."
-wait_seconds 20
-
-# Установка ingress контроллера
-echo "Step 5: Installing NGINX Ingress Controller..."
-helm upgrade --install nginx ingress-nginx/ingress-nginx \
-  -f install/k8s/manifests/nginx-ingress.yaml \
-  --namespace zsvv-ng \
-  --create-namespace \
-  --set controller.admissionWebhooks.patch.enabled=true
-
-echo "NGINX Ingress Controller installed. Waiting 5 seconds..."
-wait_seconds 5
 
 # Установка пользовательского сервиса
 echo "Step 6: Installing users service..."
@@ -105,24 +65,6 @@ helm upgrade --install hw6-api ./install/gateway-service/ \
 
 echo "API gateway installed. Waiting 4 seconds..."
 wait_seconds 5
-
-# Установка Kafka
-echo "Step 9: Installing Kafka..."
-helm upgrade --install hw7 ./install/kafka/ \
-  -n zsvv-kafka \
-  --create-namespace
-
-echo "Kafka installed. Waiting 10 seconds..."
-wait_seconds 10
-
-# Установка Kafka UI
-echo "Step 10: Installing Kafka UI..."
-helm upgrade --install hw7-ui ./install/kafka-ui/ \
-  -n zsvv-kafka \
-  --create-namespace
-
-echo "Kafka UI installed. Waiting 10 seconds..."
-wait_seconds 10
 
 # Установка Notification Service
 echo "Step 11: Installing Notification Service..."
@@ -178,16 +120,11 @@ echo "Installation summary:"
 echo "========================================="
 echo "1. Created namespaces: zsvv-main, zsvv-authority, zsvv-kafka, zsvv-ng"
 echo "2. Applied all required secrets"
-echo "3. Installed Monitoring stack in zsvv-monitoring"
-echo "4. Installed NGINX Ingress in zsvv-ng"
-echo "5. Installed Core services:"
+echo "3. Installed Core services:"
 echo "   - Users Service (hw6)"
 echo "   - Auth Service (hw6)"
 echo "   - API Gateway (hw6-api)"
-echo "6. Installed Kafka infrastructure:"
-echo "   - Kafka (hw7)"
-echo "   - Kafka UI (hw7-ui)"
-echo "7. Installed Business services:"
+echo "4. Installed Business services:"
 echo "   - Notification Service (hw7-notif)"
 echo "   - Order Service (hw7-order)"
 echo "   - Billing Service (hw7-bill)"

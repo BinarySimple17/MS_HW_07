@@ -99,12 +99,12 @@ resources: {}
   #   memory: 128Mi
 
 liveness:
-  delay: 40
+  delay: 50
   timeout: 20
   path: /actuator/health/liveness
 
 readiness:
-  delay: 40
+  delay: 50
   timeout: 20
   path: /actuator/health/readiness
 

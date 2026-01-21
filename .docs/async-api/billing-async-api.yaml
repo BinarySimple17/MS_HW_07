@@ -1,0 +1,112 @@
+asyncapi: 2.6.0
+info:
+  title: Billing Service
+  version: 1.0.0
+  description: |
+    This service handles billing operations including account management and transactions.
+    It consumes user events from Kafka to create accounts and processes financial operations.
+
+servers:
+  kafka:
+    url: '{kafkaBootstrapServer}'
+    protocol: kafka
+    protocolVersion: '2.8'
+    variables:
+      kafkaBootstrapServer:
+        default: 'localhost:9092'
+        description: 'Kafka bootstrap server address'
+
+channels:
+  user.events:
+    description: Topic for receiving user creation and update events
+    subscribe:
+      summary: Process incoming user events
+      message:
+        $ref: '#/components/messages/UserEvent'
+
+components:
+  messages:
+    UserEvent:
+      summary: User creation or update event
+      payload:
+        type: object
+        required:
+          - username
+          - firstName
+          - lastName
+          - email
+          - phone
+          - notificationType
+        properties:
+          username:
+            type: string
+            description: Unique username of the user
+            example: johndoe
+          firstName:
+            type: string
+            description: First name of the user
+            example: John
+          lastName:
+            type: string
+            description: Last name of the user
+            example: Doe
+          email:
+            type: string
+            format: email
+            description: Email address of the user
+            example: john.doe@example.com
+          phone:
+            type: string
+            description: Phone number of the user
+            example: +1-555-123-4567
+          notificationType:
+            type: string
+            description: Type of notification
+            enum:
+              - INFO
+              - SUCCESS
+              - FAIL
+              - DEFAULT
+            example: INFO
+
+  schemas:
+    UserEvent:
+      type: object
+      required:
+        - username
+        - firstName
+        - lastName
+        - email
+        - phone
+        - notificationType
+      properties:
+        username:
+          type: string
+          description: Unique username of the user
+          example: johndoe
+        firstName:
+          type: string
+          description: First name of the user
+          example: John
+        lastName:
+          type: string
+          description: Last name of the user
+          example: Doe
+        email:
+          type: string
+          format: email
+          description: Email address of the user
+          example: john.doe@example.com
+        phone:
+          type: string
+          description: Phone number of the user
+          example: +1-555-123-4567
+        notificationType:
+          type: string
+          description: Type of notification
+          enum:
+            - INFO
+            - SUCCESS
+            - FAIL
+            - DEFAULT
+          example: EMAIL
