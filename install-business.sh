@@ -11,74 +11,61 @@ wait_seconds() {
 }
 
 # Создание namespace и применение секретов
+echo "..................................................."
 echo "Step 1: Creating namespaces and applying secrets..."
 
-kubectl create namespace zsvv-main
-kubectl apply -f ./install/k8s/manifests/users-secret.yaml -n zsvv-main
-kubectl apply -f ./install/k8s/manifests/gateway-secrets.yaml -n zsvv-main
-
 kubectl create namespace zsvv-authority
+kubectl create namespace zsvv-main
+
+kubectl apply -f ./install/k8s/manifests/users-secret.yaml -n zsvv-main
+kubectl apply -f ./install/k8s/manifests/order-secrets.yaml -n zsvv-main
+kubectl apply -f ./install/k8s/manifests/bill-secrets.yaml -n zsvv-main
+kubectl apply -f ./install/k8s/manifests/notif-secrets.yaml -n zsvv-main
 kubectl apply -f ./install/k8s/manifests/auth-secrets.yaml -n zsvv-authority 
-
-# Сборка локальных helm чартов
-echo "Step 3: Building local Helm charts..."
-helm package ./install/auth-service/ --destination ./install/auth-service/
-helm package ./install/gateway-service/ --destination ./install/gateway-service/
-helm package ./install/users-service/ --destination ./install/users-service/
-helm package ./install/billing-service/ --destination ./install/billing-service/
-helm package ./install/notif-service/ --destination ./install/notif-service/
-helm package ./install/order-service/ --destination ./install/order-service/
-
-echo "Helm charts built."
 
 
 # Установка пользовательского сервиса
-echo "Step 6: Installing users service..."
+echo "..................................................."
+echo "Step 2: Installing users service..."
+helm dependency build ./install/users-service/
 helm upgrade --install hw6 ./install/users-service/ \
   -n zsvv-main \
   --set ingress.enabled=false \
   --set endpoints.kafka.space=zsvv-kafka
 
-echo "Users service installed. Waiting 5 seconds..."
-wait_seconds 5
+echo "Users service installed. Waiting 10 seconds..."
+wait_seconds 10
 
 # Установка сервиса авторизации
-echo "Step 7: Installing auth service..."
+echo "..................................................."
+echo "Step 3: Installing auth service..."
+helm dependency build ./install/auth-service/
 helm upgrade --install hw6 ./install/auth-service/ \
   -n zsvv-authority \
   --create-namespace \
   --set endpoints.usersServiceSpace=zsvv-main \
   --set endpoints.apiGatewaySpace=zsvv-main
 
-echo "Auth service installed. Waiting 5 seconds..."
-wait_seconds 5
-
-# Установка API gateway
-echo "Step 8: Installing API gateway..."
-helm upgrade --install hw6-api ./install/gateway-service/ \
-  -n zsvv-main \
-  --set endpoints.users.space=zsvv-main \
-  --set endpoints.order.space=zsvv-main \
-  --set endpoints.auth.space=zsvv-authority \
-  --set endpoints.notif.space=zsvv-main \
-  --set endpoints.bill.space=zsvv-main
-
-echo "API gateway installed. Waiting 4 seconds..."
-wait_seconds 5
+echo "Auth service installed. Waiting 10 seconds..."
+wait_seconds 10
 
 # Установка Notification Service
-echo "Step 11: Installing Notification Service..."
+echo "..................................................."
+echo "Step 4: Installing Notification Service..."
+helm dependency build ./install/notif-service/
 helm upgrade --install hw7-notif ./install/notif-service/ \
   -n zsvv-main \
   --set endpoints.usersServiceSpace=zsvv-main \
   --set endpoints.authServiceSpace=zsvv-authority \
   --set endpoints.kafkaSpace=zsvv-kafka
 
-echo "Notification Service installed. Waiting 5 seconds..."
-wait_seconds 5
+echo "Notification Service installed. Waiting 10 seconds..."
+wait_seconds 10
 
 # Установка Order Service
-echo "Step 12: Installing Order Service..."
+echo "..................................................."
+echo "Step 5: Installing Order Service..."
+helm dependency build ./install/order-service/
 helm upgrade --install hw7-order ./install/order-service/ \
   -n zsvv-main \
   --set endpoints.users.space=zsvv-main \
@@ -86,17 +73,19 @@ helm upgrade --install hw7-order ./install/order-service/ \
   --set endpoints.kafka.space=zsvv-kafka \
   --set endpoints.bill.space=zsvv-main
 
-echo "Order Service installed. Waiting 5 seconds..."
-wait_seconds 5
+echo "Order Service installed. Waiting 10 seconds..."
+wait_seconds 10
 
 # Установка Billing Service
-echo "Step 13: Installing Billing Service..."
+echo "..................................................."
+echo "Step 6: Installing Billing Service..."
+helm dependency build ./install/billing-service/
 helm upgrade --install hw7-bill ./install/billing-service/ \
   -n zsvv-main \
   --set endpoints.kafka.space=zsvv-kafka
 
-echo "Billing Service installed. Waiting 5 seconds..."
-wait_seconds 5
+echo "Billing Service installed. Waiting 10 seconds..."
+wait_seconds 10
 
 echo "========================================="
 echo "Installation completed successfully!"
