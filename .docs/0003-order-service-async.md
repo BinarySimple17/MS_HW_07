@@ -61,7 +61,7 @@
 ## Схема данных
 
 ### Описание API
-[Описание API](idl/0003_async.md)
+[Описание API](idl/0003.yaml)
 
 ### OrderCreationRequested (Kafka message)
 

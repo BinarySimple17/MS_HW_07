@@ -1,0 +1,344 @@
+asyncapi: 2.6.0
+info:
+  title: Order System Async API
+  version: 1.0.0
+  description: Асинхронное взаимодействие между микросервисами системы заказов через Kafka
+
+channels:
+  # Топики для обработки заказов
+  orders.requests:
+    description: Запрос на создание заказа
+    publish:
+      summary: API Gateway публикует запрос на создание заказа
+      message:
+        $ref: '#/components/messages/OrderCreationRequested'
+    subscribe:
+      summary: Сервис заказов потребляет запросы на создание заказа
+      message:
+        $ref: '#/components/messages/OrderCreationRequested'
+
+  orders.created:
+    description: Событие о создании заказа
+    publish:
+      summary: Сервис заказов публикует событие создания заказа
+      message:
+        $ref: '#/components/messages/OrderCreated'
+    subscribe:
+      summary: Сервис биллинга потребляет события создания заказа
+      message:
+        $ref: '#/components/messages/OrderCreated'
+
+  billing.payments:
+    description: Результат обработки платежа
+    publish:
+      summary: Сервис биллинга публикует результат обработки платежа
+      message:
+        $ref: '#/components/messages/PaymentProcessed'
+    subscribe:
+      summary: Сервис заказов потребляет результаты платежей
+      message:
+        $ref: '#/components/messages/PaymentProcessed'
+
+  orders.status:
+    description: Обновление статуса заказа
+    publish:
+      summary: Сервис заказов публикует обновления статуса
+      message:
+        $ref: '#/components/messages/OrderStatusUpdated'
+    subscribe:
+      summary: API Gateway и сервис уведомлений потребляют обновления статуса
+      message:
+        $ref: '#/components/messages/OrderStatusUpdated'
+
+  # Топики для уведомлений
+  notifications.requested:
+    description: Запрос на отправку уведомления
+    publish:
+      summary: Сервис уведомлений публикует запросы на отправку
+      message:
+        $ref: '#/components/messages/NotificationRequested'
+    subscribe:
+      summary: Сервис отправки уведомлений потребляет запросы
+      message:
+        $ref: '#/components/messages/NotificationRequested'
+
+  notifications.sent:
+    description: Уведомление отправлено
+    publish:
+      summary: Сервис отправки уведомлений публикует факт отправки
+      message:
+        $ref: '#/components/messages/NotificationSent'
+
+  # Топики для пользователей
+  users.registered:
+    description: Регистрация нового пользователя
+    publish:
+      summary: Сервис авторизации публикует события регистрации
+      message:
+        $ref: '#/components/messages/UserRegistered'
+    subscribe:
+      summary: Сервис профилей и биллинга потребляют события регистрации
+      message:
+        $ref: '#/components/messages/UserRegistered'
+
+  users.profile:
+    description: Запрос профиля пользователя
+    publish:
+      summary: Сервис уведомлений запрашивает профиль пользователя
+      message:
+        $ref: '#/components/messages/UserProfileRequested'
+    subscribe:
+      summary: Сервис профилей потребляет запросы профилей
+      message:
+        $ref: '#/components/messages/UserProfileRequested'
+
+  users.profile.response:
+    description: Ответ с профилем пользователя
+    publish:
+      summary: Сервис профилей отвечает на запросы профилей
+      message:
+        $ref: '#/components/messages/UserProfileResponse'
+    subscribe:
+      summary: Сервис уведомлений потребляет ответы с профилями
+      message:
+        $ref: '#/components/messages/UserProfileResponse'
+
+components:
+  messages:
+    OrderCreationRequested:
+      name: OrderCreationRequested
+      summary: Событие запроса создания заказа
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OrderCreationRequested'
+
+    OrderCreated:
+      name: OrderCreated
+      summary: Событие создания заказа
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OrderCreated'
+
+    PaymentProcessed:
+      name: PaymentProcessed
+      summary: Событие обработки платежа
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PaymentProcessed'
+
+    OrderStatusUpdated:
+      name: OrderStatusUpdated
+      summary: Событие обновления статуса заказа
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OrderStatusUpdated'
+
+    NotificationRequested:
+      name: NotificationRequested
+      summary: Запрос на отправку уведомления
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationRequested'
+
+    NotificationSent:
+      name: NotificationSent
+      summary: Уведомление отправлено
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/NotificationSent'
+
+    UserRegistered:
+      name: UserRegistered
+      summary: Событие регистрации пользователя
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserRegistered'
+
+    UserProfileRequested:
+      name: UserProfileRequested
+      summary: Запрос профиля пользователя
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          requestId:
+            type: string
+          username:
+            type: string
+          requestedAt:
+            type: integer
+            format: int64
+
+    UserProfileResponse:
+      name: UserProfileResponse
+      summary: Ответ с профилем пользователя
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          requestId:
+            type: string
+          username:
+            type: string
+          email:
+            type: string
+          phone:
+            type: string
+          firstName:
+            type: string
+          lastName:
+            type: string
+          respondedAt:
+            type: integer
+            format: int64
+
+  schemas:
+    OrderCreationRequested:
+      type: object
+      properties:
+        requestId:
+          type: string
+          description: Идентификатор запроса для корреляции
+        username:
+          type: string
+          description: Имя пользователя
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        deliveryAddress:
+          type: string
+        paymentMethod:
+          type: string
+        createdAt:
+          type: integer
+          format: int64
+
+    OrderCreated:
+      type: object
+      properties:
+        requestId:
+          type: string
+        username:
+          type: string
+        orderId:
+          type: integer
+          format: int64
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totalCost:
+          type: number
+          format: double
+        createdAt:
+          type: integer
+          format: int64
+
+    PaymentProcessed:
+      type: object
+      properties:
+        requestId:
+          type: string
+        orderId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        amount:
+          type: number
+          format: double
+        success:
+          type: boolean
+        failureReason:
+          type: string
+        processedAt:
+          type: integer
+          format: int64
+
+    OrderStatusUpdated:
+      type: object
+      properties:
+        requestId:
+          type: string
+        orderId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        status:
+          type: string
+        previousStatus:
+          type: string
+        updatedAt:
+          type: integer
+          format: int64
+        metadata:
+          type: object
+          additionalProperties: true
+
+    NotificationRequested:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        requestId:
+          type: string
+        username:
+          type: string
+        type:
+          type: string
+        subject:
+          type: string
+        content:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        scheduledAt:
+          type: integer
+          format: int64
+
+    NotificationSent:
+      type: object
+      properties:
+        notificationId:
+          type: string
+        requestId:
+          type: string
+        username:
+          type: string
+        success:
+          type: boolean
+        sentAt:
+          type: integer
+          format: int64
+        errorMessage:
+          type: string
+
+    UserRegistered:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        registeredAt:
+          type: integer
+          format: int64
+        source:
+          type: string
+
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: double
+        name:
+          type: string
