@@ -60,6 +60,9 @@
 
 ## Схема данных
 
+### Описание API
+[Описание API](idl/0003_async.md)
+
 ### OrderCreationRequested (Kafka message)
 
 ```json

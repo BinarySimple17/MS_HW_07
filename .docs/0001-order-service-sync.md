@@ -34,6 +34,9 @@
 ### Sequence диаграмма
 ![sequence диаграмма](img/0001-order-sequence-diagram-sync.png)   
 
+### Описание API
+[Описание API](idl/0001_sync.md)
+
 ## HTTP Endpoints
 
 | Сервис | Метод | Путь | Описание |

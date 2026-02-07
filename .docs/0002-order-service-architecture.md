@@ -49,6 +49,9 @@
 ### Sequence диаграмма
 ![sequence диаграмма](img/0002-order-sequence-diagram.png)  
 
+### Описание API
+[Описание API](idl/0002_hybr.md)
+
 ## Схема данных
 
 ### OrderEvent (Kafka message)
