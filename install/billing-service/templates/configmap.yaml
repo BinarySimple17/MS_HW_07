@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-90"
+data:
+  application-kubernetes.yaml: |
+    server:
+      port: 8080    
+    
+    spring:
+      datasource:
+        url: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}
+        username: {{ .Values.postgresql.auth.username }}
+        password: ${DATASOURCE_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          maximum-pool-size: 10
+          minimum-idle: 2
+    
+      liquibase:
+        enabled: true
+
+      kafka:
+        bootstrap-servers: {{ .Values.endpoints.kafka.host }}.{{ .Values.endpoints.kafka.space }}.svc.cluster.local:{{ .Values.endpoints.kafka.port }}
+        properties:
+          security.protocol: SASL_PLAINTEXT
+          sasl.mechanism: PLAIN
+          sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="user1" password="${KAFKA_PASSWORD}";
+
+        consumer:
+          group-id: billing-service
+          key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+          value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+          properties:
+            spring.json.use.type.headers: false
+            spring.json.value.default.type: ru.binarysimple.billng.kafka.UserEvent
+            spring.json.trusted.packages: "*"        
+    
+      springdoc:
+        api-docs:
+          path: /v3/api-docs
+        swagger-ui:
+          path: /swagger-ui.html
+        info:
+          title: Billing Service API
+          version: {{ .Values.image.tag }}
+          description: {{ .Chart.Name }} API.
+          contact:
+            name: Support Team
+            email: support@example.com    

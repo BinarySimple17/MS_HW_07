@@ -1,0 +1,145 @@
+# Default values for app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+
+image:
+  repository: binarysimple/simple-users-service
+  pullPolicy: IfNotPresent
+  tag: "0.0.7"
+
+app:
+  name: users-service
+  version: "0.0.6"
+  description: "Users REST API"
+
+service:
+  type: ClusterIP
+  port: 80
+  portName: http
+  targetPort: 8080
+  # nodePort: 30080  # NodePort/LoadBalancer (opt)
+  # loadBalancerIP: ""  # LoadBalancer (opt)
+  annotations: {}
+
+headlessService:
+  enabled: false
+
+ingress:
+  enabled: true
+  className: "nginx"
+  labels: {}
+  annotations: {}
+  hosts:
+    - host: arch.homework
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+liveness:
+  delay: 15
+  timeout: 10
+  path: /actuator/health/
+
+autoscaling:
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPU: 80
+    targetMemory: ""
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    path: /actuator/prometheus
+    jobLabel: ""
+    interval: 15s
+    scrapeTimeout: ""
+  nginx:
+    interval: 15s
+    scrapeTimeout: 10s
+    namespace: ng
+
+serviceAccount:
+  create: false #ьеперь не нужен пока
+  automount: true
+  annotations: {}
+  name: ""
+
+# Конфигурация базы данных - пароль в секрете
+database:
+  createSecret: true
+  secretName: db-secret
+  passwordKey: password
+  hikari:
+    pool:
+      maxSize: 10
+    minIdle: 2
+  # Настройки миграции
+  migration:
+    enabled: true
+    restartPolicy: Never # не перезапускать #OnFailure
+    waitForPostgres: true # ждать postgre
+    timeout: 300 # ожидание в секундах
+    backoffLimit: 0 # количество попыток рестарта
+    ttlSecondsAfterFinished: 120 # автоудаление Job через 2 минуту
+    gracePeriod: 30
+    debug: false # включить debug логи
+    useConfigMap: true # использовать ConfigMap
+    changeVersion: "20260102-changelog" # версия миграции
+
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresPasswordRotation: false
+    username: "app_user"
+    existingSecret: "db-secret"
+    existingSecretPasswordKey: "password"
+    database: "usersdb"
+    createSecret: false
+    enablePostgresUser: true
+    # пользователь для мониторинга
+    pgMonitorUsername: "exporter_user"
+  #    pgMonitorPassword: "exporter_password"
+  primary:
+    service:
+      type: ClusterIP
+      port: 5432
+    persistence:
+      enabled: true
+      size: 2Gi
+      storageClass: "standard"
+  architecture: "standalone"
+
+#https://github.com/bitnami/charts/issues/20247
+postgresql-exporter:
+  enabled: true
+  config:
+    datasource:
+      host: "users-release-postgresql"
+      user: "app_user"
+      passwordSecret:
+        name: "db-secret"
+        key: "password"
+      port: "5432"
+      database: "usersdb"
+    disableDefaultMetrics: true
+    #time=2025-12-22T12:33:36.449Z level=ERROR source=collector.go:207 msg="collector failed" name=wal duration_seconds=0.1016625 err="pq: permission denied for function pg_ls_waldir"
+    # я не помню где я откопал эти параметры
+    extraArgs: ["--no-collector.wal", "--no-collector.stat_bgwriter"]
+  serviceMonitor:
+    enabled: true
+    namespace: default
+    interval: 30s
+    scrapeTimeout: 10s
+    scheme: http
+    labels: {}
+
+endpoints:
+  kafka:
+    release: ""
+    host: "kafka"
+    space: "default"
+    port: "9092"

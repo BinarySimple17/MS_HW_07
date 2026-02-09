@@ -1,0 +1,13 @@
+prometheus:
+  prometheusSpec:
+#  Warning  Failed     9s               kubelet            Failed to pull image "quay.io/prom/prometheus:v3.8.1": Error response from daemon: unauthorized: access to the requested resource is not authorized
+#  Warning  Failed     9s               kubelet            Error: ErrImagePull
+#    поэтому подменяю образ на образ с докера
+#    image:
+#      registry: docker.io
+#      repository: prom/prometheus
+#      tag: v3.8.1
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    podMonitorNamespaceSelector: {}  # пустой объект выбирает все неймспейсы
+    serviceMonitorNamespaceSelector: {}  # пустой объект выбирает все неймспейсы

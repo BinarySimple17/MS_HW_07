@@ -1,0 +1,17 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "order-service.fullname" . }}-metrics
+  labels:
+    {{- include "order-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      name: http-metrics
+  selector:
+    {{- include "order-service.selectorLabels" . | nindent 4 }}
+{{- end }}

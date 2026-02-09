@@ -1,0 +1,12 @@
+grafana:
+  service:
+    port: 9091
+  adminPassword: "mypassword123"
+  dashboards:
+    default:
+      dashboard_1:
+        file: dashboards/dashboard_1.json
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard  # для поиска сгенеренных дашбордов в ConfigMap

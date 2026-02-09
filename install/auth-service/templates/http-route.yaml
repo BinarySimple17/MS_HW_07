@@ -1,0 +1,32 @@
+{{- if and .Values.httpRoute.enabled }}
+{{- $gwName := .Values.gateway.enabled | ternary (include "auth-service.fullname" .) (.Values.httpRoute.gateway.name) }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "auth-service.fullname" . }}
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+  {{- with .Values.httpRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    - name: {{ $gwName }}
+      sectionName: {{ .Values.httpRoute.gateway.sectionName }}
+  hostnames:
+    - {{ .Values.httpRoute.hostname }}
+  rules:
+    - backendRefs:
+        - kind: Service
+          name: {{ include "auth-service.fullname" . }}
+          port: {{ .Values.service.port }}
+      matches:
+        {{- range .Values.httpRoute.paths }}
+        - path:
+            value: {{ .path.value }}
+            {{- if .path.pathType }}
+            pathType: {{ .path.pathType }}
+            {{- end }}
+        {{- end }}
+{{- end }}

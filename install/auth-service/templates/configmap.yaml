@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-90"
+data:
+  application-kubernetes.yaml: |
+    spring:
+      datasource:
+        url: jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}
+        username: {{ .Values.postgresql.auth.username }}
+        password: ${DATASOURCE_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          maximum-pool-size: 10
+          minimum-idle: 2
+    
+      liquibase:
+        enabled: true
+    
+      springdoc:
+        api-docs:
+          path: /v3/api-docs
+        swagger-ui:
+          path: /swagger-ui.html
+        info:
+          title: Auth Service API
+          version: {{ .Values.image.tag }}
+          description: {{ .Chart.Name }} API.
+          contact:
+            name: Support Team
+            email: support@example.com
+    endpoints:
+      users-service: http://{{ .Values.endpoints.usersServiceRName }}-{{ .Values.endpoints.usersServiceHost }}.{{ .Values.endpoints.usersServiceSpace }}.svc.cluster.local:{{ .Values.endpoints.usersServicePort }}
+      api-gateway: http://{{ .Values.endpoints.apiGatewayRName }}-{{ .Values.endpoints.apiGatewayHost }}.{{ .Values.endpoints.apiGatewaySpace }}.svc.cluster.local:{{ .Values.endpoints.apiGatewayPort }}
+         

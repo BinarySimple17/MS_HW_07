@@ -1,0 +1,70 @@
+asyncapi: 2.6.0
+info:
+  title: Users Service
+  version: 1.0.0
+  description: Служба управления пользователями, которая отправляет события через Kafka при создании новых пользователей
+  contact:
+    name: Development Team
+    email: dev@binarysimple.ru
+
+servers:
+  kafka:
+    url: localhost:9092
+    protocol: kafka
+    security:
+      - scram: []
+    description: Kafka-брокер для локальной разработки
+
+channels:
+  user.events:
+    description: Топик для событий, связанных с пользователями
+    publish:
+      summary: Отправка события о создании пользователя
+      operationId: sendUserCreatedEvent
+      message:
+        $ref: "#/components/messages/UserCreatedEvent"
+
+components:
+  messages:
+    UserCreatedEvent:
+      summary: Событие о создании нового пользователя
+      payload:
+        type: object
+        required:
+          - username
+          - firstName
+          - lastName
+          - email
+          - phone
+          - notificationType
+        properties:
+          username:
+            type: string
+            description: Уникальное имя пользователя
+            example: johndoe
+          firstName:
+            type: string
+            description: Имя пользователя
+            example: John
+          lastName:
+            type: string
+            description: Фамилия пользователя
+            example: Doe
+          email:
+            type: string
+            format: email
+            description: Электронная почта пользователя
+            example: john.doe@example.com
+          phone:
+            type: string
+            description: Номер телефона пользователя
+            example: +1234567890
+          notificationType:
+            type: string
+            enum:
+              - INFO
+              - SUCCESS
+              - FAIL
+              - DEFAULT
+            description: Тип уведомления
+            example: SUCCESS

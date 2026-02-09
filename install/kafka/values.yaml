@@ -1,0 +1,37 @@
+nameOverride: ""
+fullnameOverride: ""
+kafka:
+  enabled: true
+  fullnameOverride: kafka
+
+  externalAccess:
+    enabled: false
+    autoDiscovery:
+      enabled: true
+    controller:
+      service:
+        type: LoadBalancer
+    broker:
+      service:
+        type: LoadBalancer
+  serviceAccount:
+    create: true
+  rbac:
+    create: true
+  kraft:
+    enabled: true
+  zookeeper:
+    enabled: false
+
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/kafka
+    tag: 4.0.0-debian-12-r10
+
+  # controller:
+  # replicaCount: 2
+
+  sasl:
+    existingSecret: "kafka-secret"
+  # client:
+  # passwords: "kafka-pass-123"
